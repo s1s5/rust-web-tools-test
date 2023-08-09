@@ -1,0 +1,49 @@
+[package]
+name = "rust-web-tools"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "*"
+async-graphql = { version = "*", features = [
+    "log",
+    "opentelemetry",
+], optional = true }
+axum = { version = "*", features = ["headers"], optional = true }
+chrono = { version = "*", optional = true }
+opentelemetry = { version = "0.19.0", features = ["rt-tokio"], optional = true }  # async-graphqlで使われているものとバージョンを合わせないといけない?
+opentelemetry-otlp = { version = "0.12.0", optional = true }
+opentelemetry_api = { version = "0.19.0", optional = true }
+sea-orm = { version = "*", optional = true }
+sentry = { version = "*", optional = true }
+serde_json = { version = "*", optional = true }
+tracing = { version = "*", optional = true }
+tracing-opentelemetry = { version = "0.19.0", optional = true }
+tracing-subscriber = { version = "*", features = [
+    "env-filter",
+], optional = true }
+
+
+[features]
+default = ["full"]
+full = [
+    "with-sea-orm",
+    "with-opentelemetry",
+    "with-graphql",
+    "with-sentry",
+    "with-axum",
+]
+with-sea-orm = ["sea-orm"]
+with-sentry = ["sentry", "serde_json"]
+with-opentelemetry = [
+    "opentelemetry",
+    "opentelemetry-otlp",
+    "opentelemetry_api",
+    "tracing",
+    "tracing-opentelemetry",
+    "tracing-subscriber",
+]
+with-axum = ["axum"]
+with-graphql = ["async-graphql", "chrono"]
