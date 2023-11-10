@@ -1,5 +1,5 @@
 [package]
-name = "rust-web-tools"
+name = "rust-web-tools-test"
 version = "0.1.0"
 edition = "2021"
 
