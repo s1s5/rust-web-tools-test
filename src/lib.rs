@@ -1,2 +1,3 @@
-pub mod graphql;
-pub mod tools;
+mod graphql;
+pub mod graphql_server;
+mod tools;

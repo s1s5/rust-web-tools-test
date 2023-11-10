@@ -33,8 +33,13 @@ pub struct Mutation(MutationRoot);
 pub type AppSchema = Schema<Query, Mutation, EmptySubscription>;
 
 pub fn build() -> async_graphql::SchemaBuilder<Query, Mutation, EmptySubscription> {
-    Schema::build(Query::default(), Mutation::default(), EmptySubscription)
+    Schema::build(
+        Query::default(),
+        Mutation::default(),
+        EmptySubscription::default(),
+    )
 }
+
 pub fn export_sdl() -> String {
     let schema = build().enable_federation().finish();
     schema.sdl_with_options(SDLExportOptions::new())
