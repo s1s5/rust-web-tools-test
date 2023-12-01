@@ -2,7 +2,7 @@ use opentelemetry_otlp::WithExportConfig;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-pub fn setup_tracing_and_opentelemetry(
+pub fn setup(
     service_name: &str,
     simple: bool,
 ) -> anyhow::Result<Option<opentelemetry::sdk::trace::Tracer>> {
@@ -24,7 +24,12 @@ pub fn setup_tracing_and_opentelemetry(
                     .with_resource(opentelemetry::sdk::Resource::new(vec![
                         opentelemetry::KeyValue::new("service.name", service_name.to_string()),
                     ])),
+            )
+            .with_batch_config(
+                opentelemetry::sdk::trace::BatchConfig::default()
+                    .with_scheduled_delay(std::time::Duration::from_secs(10)),
             );
+
         let tracer = if simple {
             pipeline.install_simple()
         } else {
@@ -45,6 +50,9 @@ pub fn setup_tracing_and_opentelemetry(
                     .with_level(true),
             )
             .with(tracing_subscriber::EnvFilter::from_default_env());
+
+        #[cfg(feature = "with-sentry")]
+        let builder = builder.with(sentry_tracing::layer());
 
         // TODO: もっときれいにかけないものか
         if let Some(tracer) = tracer.clone() {
