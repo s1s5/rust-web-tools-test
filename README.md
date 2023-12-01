@@ -1,4 +1,8 @@
 # rust-web-tools
+- `git remote add -f tools https://github.com/s1s5/rust-web-tools.git`
+- `git subtree add --prefix=src/tools --squash tools main`
+- `git subtree push --prefix=src/tools tools main`
+- `git subtree pull --prefix=src/tools --squash tools main`
 
 ## use graphql with opentelemetry
 ```rust
