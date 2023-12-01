@@ -20,6 +20,7 @@ opentelemetry-otlp = { version = "0.13", optional = true }
 opentelemetry_api = { version = "*", optional = true }
 sea-orm = { version = "*", optional = true }
 sentry = { version = "*", optional = true }
+sentry-tracing = { version = "*", optional = true }
 serde_json = { version = "*", optional = true }
 tokio = { version = "1", features = ["full"] }
 tower-http = { version = "^0", features = ["cors"] }
@@ -40,7 +41,7 @@ full = [
     "with-axum",
 ]
 with-sea-orm = ["sea-orm"]
-with-sentry = ["sentry", "serde_json"]
+with-sentry = ["sentry", "serde_json", "sentry-tracing"]
 with-opentelemetry = [
     "opentelemetry",
     "opentelemetry-otlp",
