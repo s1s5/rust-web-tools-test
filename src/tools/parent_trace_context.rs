@@ -43,7 +43,7 @@ where
 }
 
 impl ParentTraceContext {
-    pub fn get(&self) -> opentelemetry_api::Context {
+    pub fn get(&self) -> opentelemetry::Context {
         opentelemetry::global::get_text_map_propagator(|prop| prop.extract(self))
     }
 }
@@ -58,6 +58,6 @@ impl opentelemetry::propagation::Extractor for ParentTraceContext {
     }
 
     fn keys(&self) -> Vec<&str> {
-        self.headers.keys().map(|x| *x).collect::<Vec<_>>()
+        self.headers.keys().copied().collect()
     }
 }
