@@ -5,19 +5,15 @@ use axum::{response::IntoResponse, routing::get, Router};
 use opentelemetry::trace::FutureExt;
 
 use super::graphql;
-use super::tools::{
-    access_token::AccessToken, db::Database, parent_trace_context::ParentTraceContext, server,
-    setup_tracing,
-};
+use super::tools::{db::Database, parent_trace_context::ParentTraceContext, server, setup_tracing};
 
 async fn graphql_handler(
     schema: Extension<graphql::AppSchema>,
-    token: AccessToken,
     parent_trace_context: ParentTraceContext,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
     schema
-        .execute(req.into_inner().data(token))
+        .execute(req.into_inner())
         .with_context(parent_trace_context.get())
         .await
         .into()
@@ -35,11 +31,7 @@ async fn graphiql() -> impl IntoResponse {
 }
 
 pub async fn main() -> anyhow::Result<()> {
-    let _guard = if let Ok(sentry_dsn) = std::env::var("SENTRY_DSN") {
-        Some(sentry::init(sentry_dsn))
-    } else {
-        None
-    };
+    let guard = setup_tracing::setup()?;
 
     let schema_builder = graphql::build()
         .data(async_graphql::dataloader::DataLoader::new(
@@ -48,11 +40,7 @@ pub async fn main() -> anyhow::Result<()> {
         ))
         .enable_federation()
         .extension(async_graphql::extensions::Logger);
-    let schema_builder = if let Some(tracer) = setup_tracing::setup("this-service-name", true)? {
-        schema_builder.extension(async_graphql::extensions::OpenTelemetry::new(tracer))
-    } else {
-        schema_builder
-    };
+    let schema_builder = guard.add_extension(schema_builder);
 
     let schema = schema_builder.finish();
 
@@ -65,5 +53,7 @@ pub async fn main() -> anyhow::Result<()> {
         .layer(Extension(schema))
         .layer(cors);
 
-    server::run(router).await
+    server::run(router, Some(8000)).await?;
+
+    Ok(())
 }
