@@ -4,6 +4,9 @@
 - `git subtree push --prefix=src/tools tools main`
 - `git subtree pull --prefix=src/tools --squash tools main`
 
+## DATABASE_URL
+- `export DATABASE_URL="postgres://postgres:password@localhost:5432/rust-web-tools-test?sslmode=disable"`
+
 ## use graphql with opentelemetry
 ```rust
 async fn graphql_handler(

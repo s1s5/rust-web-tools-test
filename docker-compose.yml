@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - type: tmpfs
+        target: /var/lib/postgresql/data
+
+  app:
+    image: s1s5/rust-dev:1.81
+    working_dir: /usr/src
+    command:
+      - cargo
+      - watch
+      - -s
+      - 'cargo run'
+    stop_grace_period: 5s
+    environment:
+      RUST_BACKTRACE: full
+      RUST_LOG: debug
+      USER_ID: ${USER_ID}
+      GROUP_ID: ${GROUP_ID}
+      DATABASE_URL: postgres://postgres:password@db:5432/postgres
+    volumes:
+      - ./:/usr/src
+      - ./target/docker:/usr/src/target

@@ -2,21 +2,27 @@ use async_graphql::http::GraphiQLSource;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{response, Extension};
 use axum::{response::IntoResponse, routing::get, Router};
+#[cfg(feature = "with-opentelemetry")]
 use opentelemetry::trace::FutureExt;
 
 use super::graphql;
-use super::tools::{db::Database, parent_trace_context::ParentTraceContext, server, setup_tracing};
+#[cfg(feature = "with-opentelemetry")]
+use super::tools::parent_trace_context::ParentTraceContext;
+#[cfg(all(feature = "with-opentelemetry", feature = "with-sentry"))]
+use super::tools::setup_tracing;
+use super::tools::{db::Database, server};
 
 async fn graphql_handler(
     schema: Extension<graphql::AppSchema>,
-    parent_trace_context: ParentTraceContext,
+    #[cfg(feature = "with-opentelemetry")] parent_trace_context: ParentTraceContext,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
-    schema
-        .execute(req.into_inner())
-        .with_context(parent_trace_context.get())
-        .await
-        .into()
+    let schema = schema.execute(req.into_inner());
+
+    #[cfg(feature = "with-opentelemetry")]
+    let schema = schema.with_context(parent_trace_context.get());
+
+    schema.await.into()
 }
 
 #[cfg(debug_assertions)]
@@ -31,6 +37,7 @@ async fn graphiql() -> impl IntoResponse {
 }
 
 pub async fn main() -> anyhow::Result<()> {
+    #[cfg(all(feature = "with-opentelemetry", feature = "with-sentry"))]
     let guard = setup_tracing::setup()?;
 
     let schema_builder = graphql::build()
@@ -40,8 +47,9 @@ pub async fn main() -> anyhow::Result<()> {
         ))
         .enable_federation()
         .extension(async_graphql::extensions::Logger);
-    let schema_builder = guard.add_extension(schema_builder);
 
+    #[cfg(all(feature = "with-opentelemetry", feature = "with-sentry"))]
+    let schema_builder = guard.add_extension(schema_builder);
     let schema = schema_builder.finish();
 
     let cors = tower_http::cors::CorsLayer::new()
